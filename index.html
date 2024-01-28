@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MedacDent - Clínica Dental</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            padding-bottom: 50px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+
+        header {
+            background-color: #3498db;
+            color: #fff;
+            text-align: center;
+            padding: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #logo {
+            width: 80px; /* Ajusta el tamaño del logo */
+            margin-right: 10px; /* Espacio entre el logo y el texto */
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        section {
+            margin: 20px;
+        }
+
+        form {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;
+            color: #fff;
+        }
+
+        footer {
+            background-color: #3498db;
+            color: #fff;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        form label {
+            display: block;
+            margin-bottom: 5px;
+            color: #555;
+        }
+
+        form input, form select, form textarea {
+            margin-bottom: 15px;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        form button {
+            padding: 10px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        form button:hover {
+            background-color: #2980b9;
+        }
+
+        .error {
+            border: 1px solid red;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img id="logo" src="medacdentlogo.png" alt="MedacDent Logo">
+        <h1>MedacDent - Clínica Dental</h1>
+    </header>
+
+    <section>
+        <form id="citaForm" onsubmit="return validarFormulario()">
+            <h2>Añadir Nueva Cita</h2>
+
+            <label for="fecha">Fecha:</label>
+            <input type="date" id="fecha" name="fecha" required>
+
+            <label for="hora">Hora:</label>
+            <input type="time" id="hora" name="hora" required>
+
+            <h3>Datos del Paciente</h3>
+
+            <label for="dni">DNI:</label>
+            <input type="text" id="dni" name="dni" required>
+
+            <label for="nombre">Nombre:</label>
+            <input type="text" id="nombre" name="nombre" required>
+
+            <label for="apellidos">Apellidos:</label>
+            <input type="text" id="apellidos" name="apellidos" required>
+
+            <label for="telefono">Teléfono:</label>
+            <input type="tel" id="telefono" name="telefono" required>
+
+            <label for="fechaNacimiento">Fecha de Nacimiento:</label>
+            <input type="date" id="fechaNacimiento" name="fechaNacimiento" required>
+
+            <h3>Observaciones</h3>
+
+            <label for="observaciones">Observaciones:</label>
+            <textarea id="observaciones" name="observaciones" rows="4"></textarea>
+
+            <button type="submit">Guardar Cita</button>
+        </form>
+
+        <h2>Lista de Citas</h2>
+        <table id="citasTable">
+            <thead>
+                <tr>
+                    <th class="hidden">ID</th>
+                    <th>DNI</th>
+                    <th>Nombre</th>
+                    <th>Apellidos</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Teléfono</th>
+                    <th>Fecha de Nacimiento</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Las citas se cargarán desde localStorage -->
+            </tbody>
+        </table>
+        <div id="noDataMessage" style="display:none;">
+            <p>No hay datos disponibles en la Lista de Citas.</p>
+        </div>
+    </section>
+
+    <footer>
+        <p>Contacto: Teléfono: +34 600 00 00 00 - Dirección: Calle Ficticia, 1, 28000, Madrid - Email: contacto@medacdent.com</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            cargarCitasDesdeLocalStorage();
+        });
+
+        function validarFormulario() {
+            limpiarErrores();
+
+            var dniInput = document.getElementById('dni');
+            var dniRegex = /^\d{8}[a-zA-Z]$/;
+            if (!dniRegex.test(dniInput.value)) {
+                mostrarError(dniInput, 'El DNI debe tener 8 caracteres numéricos y una letra.');
+                return false;
+            }
+
+            var nombreInput = document.getElementById('nombre');
+            var nombreRegex = /^[a-zA-Z]+$/;
+            if (!nombreRegex.test(nombreInput.value)) {
+                mostrarError(nombreInput, 'El Nombre debe contener solo letras.');
+                return false;
+            }
+
+            var apellidosInput = document.getElementById('apellidos');
+            if (!nombreRegex.test(apellidosInput.value)) {
+                mostrarError(apellidosInput, 'Los Apellidos deben contener solo letras.');
+                return false;
+            }
+
+            var fechaInput = document.getElementById('fecha');
+            var fechaSeleccionada = new Date(fechaInput.value);
+            var fechaActual = new Date();
+            fechaActual.setDate(fechaActual.getDate() - 1);
+            if (fechaSeleccionada <= fechaActual) {
+                mostrarError(fechaInput, 'La fecha debe ser posterior a la del día anterior al que nos encontramos.');
+                return false;
+            }
+
+            var telefonoInput = document.getElementById('telefono');
+            var telefonoRegex = /^\d{9,}$/;
+            if (!telefonoRegex.test(telefonoInput.value)) {
+                mostrarError(telefonoInput, 'El teléfono debe tener al menos 9 caracteres numéricos.');
+                return false;
+            }
+
+            guardarCita();
+            return false; // Evitar que el formulario se envíe realmente
+        }
+
+        function mostrarError(elemento, mensaje) {
+            elemento.classList.add('error');
+            var errorMensaje = document.createElement('div');
+            errorMensaje.className = 'error-mensaje';
+            errorMensaje.textContent = mensaje;
+            elemento.parentNode.insertBefore(errorMensaje, elemento.nextSibling);
+        }
+
+        function limpiarErrores() {
+            var errores = document.querySelectorAll('.error-mensaje');
+            errores.forEach(function (error) {
+                error.parentNode.removeChild(error);
+            });
+
+            var elementosConError = document.querySelectorAll('.error');
+            elementosConError.forEach(function (elemento) {
+                elemento.classList.remove('error');
+            });
+        }
+
+        function guardarCita() {
+            var id = new Date().getTime();
+            var dni = document.getElementById('dni').value;
+            var nombre = document.getElementById('nombre').value;
+            var apellidos = document.getElementById('apellidos').value;
+            var fecha = document.getElementById('fecha').value;
+            var hora = document.getElementById('hora').value;
+            var telefono = document.getElementById('telefono').value;
+            var fechaNacimiento = document.getElementById('fechaNacimiento').value;
+
+            var cita = {
+                id: id,
+                dni: dni,
+                nombre: nombre,
+                apellidos: apellidos,
+                fecha: fecha,
+                hora: hora,
+                telefono: telefono,
+                fechaNacimiento: fechaNacimiento
+            };
+
+            var citas = JSON.parse(localStorage.getItem('citas')) || [];
+            citas.push(cita);
+            localStorage.setItem('citas', JSON.stringify(citas));
+
+            limpiarFormulario();
+            cargarCitasDesdeLocalStorage();
+        }
+
+        function limpiarFormulario() {
+            var formulario = document.getElementById('citaForm');
+            formulario.reset();
+            limpiarErrores();
+        }
+
+        function cargarCitasDesdeLocalStorage() {
+            var citasTable = document.getElementById('citasTable');
+            var citas = JSON.parse(localStorage.getItem('citas')) || [];
+            var tbody = citasTable.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            if (citas.length === 0) {
+                document.getElementById('noDataMessage').style.display = 'block';
+            } else {
+                document.getElementById('noDataMessage').style.display = 'none';
+            }
+
+            citas.forEach(function (cita) {
+                var row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="hidden">${cita.id}</td>
+                    <td>${cita.dni}</td>
+                    <td>${cita.nombre}</td>
+                    <td>${cita.apellidos}</td>
+                    <td>${cita.fecha}</td>
+                    <td>${cita.hora}</td>
+                    <td>${cita.telefono}</td>
+                    <td>${cita.fechaNacimiento}</td>
+                    <td>
+                        <button onclick="modificarCita(${cita.id})">Modificar</button>
+                        <button onclick="eliminarCita(${cita.id})">Eliminar</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function eliminarCita(id) {
+            var citas = JSON.parse(localStorage.getItem('citas')) || [];
+            var nuevasCitas = citas.filter(function (cita) {
+                return cita.id !== id;
+            });
+
+            localStorage.setItem('citas', JSON.stringify(nuevasCitas));
+            cargarCitasDesdeLocalStorage();
+        }
+
+        function modificarCita(id) {
+            var citas = JSON.parse(localStorage.getItem('citas')) || [];
+            var cita = citas.find(function (c) {
+                return c.id === id;
+            });
+
+            if (cita) {
+                // Llenar el formulario con los datos de la cita seleccionada
+                document.getElementById('dni').value = cita.dni;
+                document.getElementById('nombre').value = cita.nombre;
+                document.getElementById('apellidos').value = cita.apellidos;
+                document.getElementById('fecha').value = cita.fecha;
+                document.getElementById('hora').value = cita.hora;
+                document.getElementById('telefono').value = cita.telefono;
+                document.getElementById('fechaNacimiento').value = cita.fechaNacimiento;
+
+                // Eliminar la cita antigua
+                citas = citas.filter(function (c) {
+                    return c.id !== id;
+                });
+
+                localStorage.setItem('citas', JSON.stringify(citas));
+                cargarCitasDesdeLocalStorage();
+            }
+        }
+    </script>
+
+</body>
+</html>
